@@ -97,10 +97,9 @@ private:
         // Инкремент итератора, не указывающего на существующий элемент списка,
         // приводит к неопределённому поведению
         BasicIterator operator++(int) noexcept {
-            assert(node_ != nullptr);
-            Node* node = this->node_;
-            node_ = node_->next_node;
-            return static_cast<SingleLinkedList<value_type>::BasicIterator<value_type>>(node);
+            auto old_value(*this);
+            ++(*this);
+            return old_value;
         }
 
         // Операция разыменования. Возвращает ссылку на текущий элемент
@@ -289,26 +288,17 @@ public:
 
     // Очищает список за время O(N)
     void Clear() noexcept {
-        if (!IsEmpty()) {
-            Node *element = head_.next_node;
-            Node *next = nullptr;
-            if  (head_.next_node) {
-                next = element->next_node;
-            } 
-            for (size_t iter = 0;iter != size_; ++iter) {
-                if (element != nullptr){
-                    delete element;
-                    element = next;
-                    if (next != nullptr){
-                        next = element->next_node;
-                    }
-                }               
-            }
-            size_ = 0;      
-        }
-    }    
-    ~SingleLinkedList () { Clear(); }
-};
+       while (head_.next_node != nullptr) {
+            auto temp_ptr = head_.next_node;
+            head_.next_node = head_.next_node->next_node;
+            delete temp_ptr;
+       }
+       size_ = 0;
+    }
+
+    ~SingleLinkedList() {
+        Clear();
+    }
 
 template <typename Type>
 void swap(SingleLinkedList<Type>& lhs, SingleLinkedList<Type>& rhs) noexcept {
@@ -335,19 +325,15 @@ bool operator<(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>& 
 
 template <typename Type>
 bool operator<=(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>& rhs) {
-    return  std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [] (const Type &a, const Type &b) {
-        return a <= b;
-     });
+    return (lhs < rhs) || (lhs == rhs)
 }
 
 template <typename Type>
 bool operator>(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>& rhs) {
-    return std::lexicographical_compare(rhs.begin(), rhs.end(), lhs.begin(), lhs.end());
+    return !(lhs < rhs)
 }
 
 template <typename Type>
 bool operator>=(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>& rhs) {
-    return  std::lexicographical_compare(rhs.begin(), rhs.end(), lhs.begin(), lhs.end(), [] (const Type &a, const Type &b) {
-        return a <= b;
-     });
+    return !(lhs < rhs) || (lhs == rhs)
 } 
